@@ -19,52 +19,10 @@ def main():
     port = 4040
     server_process = subprocess.Popen(f'iperf3 -s -p {port} -i {interval}', encoding = 'utf-8', stdout = subprocess.PIPE, shell = True)
     client_process = subprocess.Popen(f'iperf3 -c {ip} -p {port} -i {interval}', encoding = 'utf-8', stdout = subprocess.PIPE, shell = True)
-    time.sleep(15)
-    while True:
-        client_output = client_process.stdout.readline()
-        print(client_output)########################################
-        c_index = 0
-        client_bitrate_str = ''
-        if client_output.find("bits/sec") != -1:
-            c_index = client_output.find("bits/sec") + -3
-            while client_output[c_index] != ' ':
-                client_bitrate_str = client_output[c_index] + client_bitrate_str
-                c_index -= 1
-            snd_x_axis.append(snd_period + interval)
-            print('$' + client_bitrate_str + '$')
-            snd_y_axis.append(float(client_bitrate_str))
-            snd_period += interval
-        if 'sender' in client_output:
-            sender_index = client_output.find('bits/sec')
-            temp = sender_index - 3
-            while client_output[temp] != ' ':
-                temp -= 1
-            receiver_average_bitrate = client_output[temp:sender_index + len('bits/sec')]
-        if client_output == '':
-            break
-    while True:
-        server_output = server_process.stdout.readline()
-        print(server_output)########################################
-        s_index = 0
-        server_bitrate_str = ''
-        if server_output.find("bits/sec") != -1:
-            s_index = server_output.find("bits/sec") - 3
-            while server_output[s_index] != ' ':
-                server_bitrate_str = server_output[s_index] + server_bitrate_str
-                s_index -= 1
-            
-            rcv_x_axis.append(rcv_period + interval)
-            print('#' + server_bitrate_str + '#')
-            rcv_y_axis.append(float(server_bitrate_str))
-            rcv_period += interval
-        if 'receiver' in server_output:
-            break
+    #time.sleep(15)
+
     
-    print(f'Average Sender Throughput: {receiver_average_bitrate}')
-    plt.plot(snd_x_axis, snd_y_axis, color = 'red')
-    plt.plot(rcv_x_axis, rcv_y_axis, color = 'blue')
-    plt.show()
-    plt.close()
+
 
     capturer = pyshark.LiveCapture(interface = 'lo', display_filter = 'tcp.srcport == 4040 || tcp.dstport == 4040')
     timeout = 10
@@ -137,12 +95,52 @@ def main():
         # previous = difference
         # x_axis.append(difference)
 
-
+    while True:
+        client_output = client_process.stdout.readline()
+        print(client_output)########################################
+        c_index = 0
+        client_bitrate_str = ''
+        if client_output.find("bits/sec") != -1:
+            c_index = client_output.find("bits/sec") + -3
+            while client_output[c_index] != ' ':
+                client_bitrate_str = client_output[c_index] + client_bitrate_str
+                c_index -= 1
+            snd_x_axis.append(snd_period + interval)
+            print('$' + client_bitrate_str + '$')
+            snd_y_axis.append(float(client_bitrate_str))
+            snd_period += interval
+        if 'sender' in client_output:
+            sender_index = client_output.find('bits/sec')
+            temp = sender_index - 3
+            while client_output[temp] != ' ':
+                temp -= 1
+            receiver_average_bitrate = client_output[temp:sender_index + len('bits/sec')]
+        if client_output == '':
+            break
+    while True:
+        server_output = server_process.stdout.readline()
+        print(server_output)########################################
+        s_index = 0
+        server_bitrate_str = ''
+        if server_output.find("bits/sec") != -1:
+            s_index = server_output.find("bits/sec") - 3
+            while server_output[s_index] != ' ':
+                server_bitrate_str = server_output[s_index] + server_bitrate_str
+                s_index -= 1
+            
+            rcv_x_axis.append(rcv_period + interval)
+            print('#' + server_bitrate_str + '#')
+            rcv_y_axis.append(float(server_bitrate_str))
+            rcv_period += interval
+        if 'receiver' in server_output:
+            break
+    
+    print(f'Average Sender Throughput: {receiver_average_bitrate}')
+    plt.plot(snd_x_axis, snd_y_axis, color = 'red')
+    plt.plot(rcv_x_axis, rcv_y_axis, color = 'blue')
+    plt.show()
     
 
-
-
-    #print()
     print("Number of recieved packets: {}".format(received_packet_counter))
     print("Number of retransmited packets: " + str(retransmition_packet_counter))
         
