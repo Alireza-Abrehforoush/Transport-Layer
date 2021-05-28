@@ -4,17 +4,32 @@ import time
 import subprocess
 import os
 import signal
+import colorama
+
+class MyTextFormat:
+   PURPLE = '\033[95m'
+   CYAN = '\033[96m'
+   DARKCYAN = '\033[36m'
+   BLUE = '\033[94m'
+   GREEN = '\033[92m'
+   YELLOW = '\033[93m'
+   RED = '\033[91m'
+   BOLD = '\033[1m'
+   UNDERLINE = '\033[4m'
+   END = '\033[0m'
 
 
 def main():
-    snd_x_axis = [0]
-    snd_y_axis = [0]
-    rcv_x_axis = [0]
-    rcv_y_axis = [0]
+    print('Please wait...')
+    print('')
+    snd_x_axis = []
+    snd_y_axis = []
+    rcv_x_axis = []
+    rcv_y_axis = []
     snd_period = 0
     rcv_period = 0
     receiver_average_bitrate = ''
-    ip = "127.0.0.1"
+    ip = '127.0.0.1'
     interval = 0.1
     port = 4040
     server_process = subprocess.Popen(f'iperf3 -s -p {port} -i {interval}', encoding = 'utf-8', stdout = subprocess.PIPE, shell = True)
@@ -49,8 +64,8 @@ def main():
         # print(client_output)########################################
         c_index = 0
         client_bitrate_str = ''
-        if client_output.find("bits/sec") != -1:
-            c_index = client_output.find("bits/sec") + -3
+        if client_output.find('bits/sec') != -1:
+            c_index = client_output.find('bits/sec') + -3
             while client_output[c_index] != ' ':
                 client_bitrate_str = client_output[c_index] + client_bitrate_str
                 c_index -= 1
@@ -63,7 +78,7 @@ def main():
             temp = sender_index - 3
             while client_output[temp] != ' ':
                 temp -= 1
-            receiver_average_bitrate = client_output[temp:sender_index + len('bits/sec')]
+            receiver_average_bitrate = client_output[temp + 1:sender_index + len('bits/sec')]
         if client_output == '':
             break
     while True:
@@ -71,8 +86,8 @@ def main():
         # print(server_output)########################################
         s_index = 0
         server_bitrate_str = ''
-        if server_output.find("bits/sec") != -1:
-            s_index = server_output.find("bits/sec") - 3
+        if server_output.find('bits/sec') != -1:
+            s_index = server_output.find('bits/sec') - 3
             while server_output[s_index] != ' ':
                 server_bitrate_str = server_output[s_index] + server_bitrate_str
                 s_index -= 1
@@ -84,15 +99,18 @@ def main():
         if 'receiver' in server_output:
             break
     
-    print(f'Average Sender Throughput: {receiver_average_bitrate}')
-    print("Number of recieved packets: {}".format(received_packet_counter))
-    print("Number of retransmited packets: " + str(retransmition_packet_counter))
+    print('Average Sender Throughput: ' + colorama.Fore.GREEN + MyTextFormat.BOLD + receiver_average_bitrate + MyTextFormat.END + colorama.Fore.RESET)
+    print('Number of recieved packets: ' + colorama.Fore.GREEN + MyTextFormat.BOLD + str(received_packet_counter) + MyTextFormat.END + colorama.Fore.RESET)
+    print('Number of retransmited packets: ' + colorama.Fore.GREEN + MyTextFormat.BOLD + str(retransmition_packet_counter) + MyTextFormat.END + colorama.Fore.RESET)
+    print('')
     plt.plot(snd_x_axis, snd_y_axis, color = 'red')
     plt.plot(rcv_x_axis, rcv_y_axis, color = 'blue')
     plt.xlabel('Time(sec)')
     plt.ylabel('Bitrate(Gbits/sec)')
+    print('Close \'Figure 1\' to continue...' + '(' + colorama.Fore.YELLOW + MyTextFormat.BOLD + 'Attention:' + MyTextFormat.END + colorama.Fore.RESET + ' Do not kill the process!' + ')')
     plt.show()
 
     os.killpg(os.getpgid(server_process.pid), signal.SIGTERM)
+    
 
 main()
