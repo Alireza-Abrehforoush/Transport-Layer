@@ -3,9 +3,31 @@ from matplotlib import pyplot as plt
 import time
 import os
 import json
+import subprocess
 
 
 def main():
+    ip = "127.0.0.1"
+    interval = 0.2
+    port = 4040
+    server_process = subprocess.Popen(f'iperf3 -s -p {port} -i {interval}', encoding = 'utf-8', stdout = subprocess.PIPE, shell = True)
+    client_process = subprocess.Popen(f'iperf3 -c {ip} -p {port} -i {interval}', encoding = 'utf-8', stdout = subprocess.PIPE, shell = True)
+    time.sleep(15)
+    while True:
+        client_output = client_process.stdout.readline()
+        print(client_output)
+        print("#" * 50)
+        if client_output == '':
+            break
+    while True:
+        server_output = server_process.stdout.readline()
+        print(server_output)
+        print("@" * 50)
+        if server_output == '':
+            break
+            
+
+    print("#################")
     capturer = pyshark.LiveCapture(interface = 'lo', display_filter = 'tcp.srcport == 4040 || tcp.dstport == 4040')
     timeout = 10
     start = time.time()
@@ -41,7 +63,6 @@ def main():
 
         snd_bitrate = 0
         difference = float(pkt.sniff_timestamp) - start
-        
         if int(current_src_port) == 4040:
             snd_sum_of_lenghts += float(pkt.length)
             snd_period += difference - previous
