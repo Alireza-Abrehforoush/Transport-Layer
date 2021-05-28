@@ -13,9 +13,10 @@ def main():
     rcv_y_axis = [0]
     snd_period = 0
     rcv_period = 0
+    receiver_average_bitrate = ''
     ip = "127.0.0.1"
-    interval = 0.2
-    port = 4046
+    interval = 0.1
+    port = 4040
     server_process = subprocess.Popen(f'iperf3 -s -p {port} -i {interval}', encoding = 'utf-8', stdout = subprocess.PIPE, shell = True)
     client_process = subprocess.Popen(f'iperf3 -c {ip} -p {port} -i {interval}', encoding = 'utf-8', stdout = subprocess.PIPE, shell = True)
     time.sleep(15)
@@ -31,8 +32,14 @@ def main():
                 c_index -= 1
             snd_x_axis.append(snd_period + interval)
             print('$' + client_bitrate_str + '$')
-            snd_y_axis.append(float(client_bitrate_str)/10 ** 6)
+            snd_y_axis.append(float(client_bitrate_str))
             snd_period += interval
+        if 'sender' in client_output:
+            sender_index = client_output.find('bits/sec')
+            temp = sender_index - 3
+            while client_output[temp] != ' ':
+                temp -= 1
+            receiver_average_bitrate = client_output[temp:sender_index + len('bits/sec')]
         if client_output == '':
             break
     while True:
@@ -48,15 +55,16 @@ def main():
             
             rcv_x_axis.append(rcv_period + interval)
             print('#' + server_bitrate_str + '#')
-            rcv_y_axis.append(float(server_bitrate_str)/10 ** 6)
+            rcv_y_axis.append(float(server_bitrate_str))
             rcv_period += interval
         if 'receiver' in server_output:
             break
-            
+    
+    print(f'Average Sender Throughput: {receiver_average_bitrate}')
     plt.plot(snd_x_axis, snd_y_axis, color = 'red')
     plt.plot(rcv_x_axis, rcv_y_axis, color = 'blue')
     plt.show()
-
+    plt.close()
 
     capturer = pyshark.LiveCapture(interface = 'lo', display_filter = 'tcp.srcport == 4040 || tcp.dstport == 4040')
     timeout = 10
@@ -118,7 +126,7 @@ def main():
             break
         else:
             print(pkt)
-            if int(current_src_port) == 4040:
+            if int(current_src_port) == port:
                 received_packet_counter += 1
             if current_seq_number in dic_of_received_packets:
                 dic_of_received_packets[current_seq_number] += 1
