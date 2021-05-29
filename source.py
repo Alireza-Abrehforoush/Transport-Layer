@@ -28,11 +28,22 @@ def main():
     rcv_period = 0
     receiver_average_bitrate = ''
     ip = '127.0.0.1'
-    interval = 0.1
+    interval = 1
     port = 4040
+    speed = '5G'
+    command_no = int(input(f'Enter number of intended client command:\n1: \"‫‪iperf3‬‬ ‫‪-c‬‬ ‫‪{ip}‬‬ ‫‪-b‬‬ {speed}‬‬‬‬ ‫‪-p‬‬ ‫‪{port}‬‬ -J > file.json\"\n2: \"‫‪iperf3‬‬ ‫‪-c‬‬ ‫‪{ip}‬‬ ‫‪-b‬‬ ‫‪{speed}‬‬‬‬ ‫‪-p‬‬ ‫‪{port}‬‬ ‫‪-u‬‬ -J > file.json\"\n'))
+    print('')
+    iperf_client_command = ''
+    if command_no == 1:
+        iperf_client_command = f'iperf3 -c {ip} -b {speed} -p {port} -i {interval}'
+    elif command_no == 2:
+        iperf_client_command = f'iperf3 -c {ip} -b {speed} -p {port} -i {interval} -u'
+    else:
+        print('Invalid input!')
     server_process = subprocess.Popen(f'iperf3 -s -p {port} -i {interval}', encoding = 'utf-8', stdout = subprocess.PIPE, shell = True)
-    client_process = subprocess.Popen(f'iperf3 -c {ip} -p {port} -i {interval}', encoding = 'utf-8', stdout = subprocess.PIPE, shell = True)
+    client_process = subprocess.Popen(iperf_client_command, encoding = 'utf-8', stdout = subprocess.PIPE, shell = True)
 
+    print('Capturing...')
     capturer = pyshark.LiveCapture(interface = 'lo', display_filter = 'tcp.srcport == 4040 || tcp.dstport == 4040')
     timeout = 10
     start = time.time()
@@ -40,34 +51,41 @@ def main():
     received_packet_counter = 0
     dic_of_received_packets = {}
 
+    print('Calculating...')
 #Calculating number of recieved packets and Number of retransmited packets
-    print('Capturing...')
-    capturer.sniff(timeout = timeout)
-    print('Capturing done\n')
+#Not mine
+    # capturer.sniff(timeout = timeout)
+    # print('Capturing done\n')
+    # print('Calculating...')
+    # for i in range(len(capturer)):
+    #     received_packet_counter += 1
+    #     data = f'{capturer[i]}'
+    #     if 'retransmission' in data or 'Retransmission' in data:
+    #         retransmition_packet_counter += 1
+#Mine
+    for pkt in capturer.sniff_continuously():
+        current_seq_number = pkt[pkt.transport_layer].seq_raw
+        current_src_port = pkt[pkt.transport_layer].srcport
+        if time.time() - start > timeout:
+            break
+        else:
+            # print(pkt)
+            if int(current_src_port) == port:
+                received_packet_counter += 1
+            if current_seq_number in dic_of_received_packets:
+                dic_of_received_packets[current_seq_number] += 1
+                retransmition_packet_counter += 1
+            else:
+                dic_of_received_packets[current_seq_number] = 1
 
-    for i in range(len(capturer)):
-        received_packet_counter += 1
-        data = f'{capturer[i]}'
-        if 'retransmission' in data or 'Retransmission' in data:
-            retransmition_packet_counter += 1
-    # for pkt in capturer.sniff_continuously():
-    #     current_seq_number = pkt[pkt.transport_layer].seq_raw
-    #     current_src_port = pkt[pkt.transport_layer].srcport
-    #     if time.time() - start > timeout:
-    #         break
-    #     else:
-    #         # print(pkt)
-    #         if int(current_src_port) == port:
-    #             received_packet_counter += 1
-    #         if current_seq_number in dic_of_received_packets:
-    #             dic_of_received_packets[current_seq_number] += 1
-    #             retransmition_packet_counter += 1
-    #         else:
-    #             dic_of_received_packets[current_seq_number] = 1
+    iperf_client_details = ''
+    iperf_server_details = ''
 
 #Plotting
+    print('Plotting...')
     while True:
         client_output = client_process.stdout.readline()
+        iperf_client_details += client_output + '\n'
         # print(client_output)########################################
         c_index = 0
         client_bitrate_str = ''
@@ -90,6 +108,7 @@ def main():
             break
     while True:
         server_output = server_process.stdout.readline()
+        iperf_server_details += server_output + '\n'
         # print(server_output)########################################
         s_index = 0
         server_bitrate_str = ''
@@ -106,9 +125,17 @@ def main():
         if 'receiver' in server_output:
             break
     
+    print('Output of iperf client and server:')
+    print(iperf_server_details)
+    print('#' * 75)
+    print('\n')
+    print(iperf_client_details)
+    print('')
+    print('Results:')
     print('Average Sender Throughput: ' + colorama.Fore.GREEN + MyTextFormat.BOLD + receiver_average_bitrate + MyTextFormat.END + colorama.Fore.RESET)
     print('Number of recieved packets: ' + colorama.Fore.GREEN + MyTextFormat.BOLD + str(received_packet_counter) + MyTextFormat.END + colorama.Fore.RESET)
-    print('Number of retransmitted packets: ' + colorama.Fore.GREEN + MyTextFormat.BOLD + str(retransmition_packet_counter) + MyTextFormat.END + colorama.Fore.RESET)
+    print('Number of retransmitted packets(Pyshark): ' + colorama.Fore.GREEN + MyTextFormat.BOLD + str(retransmition_packet_counter) + MyTextFormat.END + colorama.Fore.RESET)
+    
     print('')
     plt.plot(snd_x_axis, snd_y_axis, label = 'Sender', color = 'red')
     plt.plot(rcv_x_axis, rcv_y_axis, label = 'Receiver', color = 'blue')
