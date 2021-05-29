@@ -20,8 +20,6 @@ class MyTextFormat:
 
 
 def main():
-    print('Please wait...')
-    print('')
     snd_x_axis = []
     snd_y_axis = []
     rcv_x_axis = []
@@ -43,20 +41,29 @@ def main():
     dic_of_received_packets = {}
 
 #Calculating number of recieved packets and Number of retransmited packets
-    for pkt in capturer.sniff_continuously():
-        current_seq_number = pkt[pkt.transport_layer].seq_raw
-        current_src_port = pkt[pkt.transport_layer].srcport
-        if time.time() - start > timeout:
-            break
-        else:
-            # print(pkt)
-            if int(current_src_port) == port:
-                received_packet_counter += 1
-            if current_seq_number in dic_of_received_packets:
-                dic_of_received_packets[current_seq_number] += 1
-                retransmition_packet_counter += 1
-            else:
-                dic_of_received_packets[current_seq_number] = 1
+    print('Capturing...')
+    capturer.sniff(timeout = timeout)
+    print('Capturing done\n')
+
+    for i in range(len(capturer)):
+        received_packet_counter += 1
+        data = f'{capturer[i]}'
+        if 'retransmission' in data or 'Retransmission' in data:
+            retransmition_packet_counter += 1
+    # for pkt in capturer.sniff_continuously():
+    #     current_seq_number = pkt[pkt.transport_layer].seq_raw
+    #     current_src_port = pkt[pkt.transport_layer].srcport
+    #     if time.time() - start > timeout:
+    #         break
+    #     else:
+    #         # print(pkt)
+    #         if int(current_src_port) == port:
+    #             received_packet_counter += 1
+    #         if current_seq_number in dic_of_received_packets:
+    #             dic_of_received_packets[current_seq_number] += 1
+    #             retransmition_packet_counter += 1
+    #         else:
+    #             dic_of_received_packets[current_seq_number] = 1
 
 #Plotting
     while True:
@@ -101,7 +108,7 @@ def main():
     
     print('Average Sender Throughput: ' + colorama.Fore.GREEN + MyTextFormat.BOLD + receiver_average_bitrate + MyTextFormat.END + colorama.Fore.RESET)
     print('Number of recieved packets: ' + colorama.Fore.GREEN + MyTextFormat.BOLD + str(received_packet_counter) + MyTextFormat.END + colorama.Fore.RESET)
-    print('Number of retransmited packets: ' + colorama.Fore.GREEN + MyTextFormat.BOLD + str(retransmition_packet_counter) + MyTextFormat.END + colorama.Fore.RESET)
+    print('Number of retransmitted packets: ' + colorama.Fore.GREEN + MyTextFormat.BOLD + str(retransmition_packet_counter) + MyTextFormat.END + colorama.Fore.RESET)
     print('')
     plt.plot(snd_x_axis, snd_y_axis, label = 'Sender', color = 'red')
     plt.plot(rcv_x_axis, rcv_y_axis, label = 'Receiver', color = 'blue')
