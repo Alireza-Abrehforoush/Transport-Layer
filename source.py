@@ -50,6 +50,7 @@ def main():
     retransmition_packet_counter = 0
     retransmition_packet_counter_B = 0
     retransmition_packet_counter_C = ''
+    all_packets_counter = 0
     received_packet_counter = 0
     dic_of_received_packets = {}
 
@@ -66,6 +67,7 @@ def main():
     #         retransmition_packet_counter += 1
 #B
     for pkt in capturer.sniff_continuously():
+        all_packets_counter += 1
         if 'retransmission' in pkt or 'Retransmission' in pkt:
             retransmition_packet_counter_B += 1
         current_seq_number = pkt[pkt.transport_layer].seq_raw
@@ -148,6 +150,7 @@ def main():
     print('')
     print('Results:')
     print('Average Sender Throughput: ' + colorama.Fore.GREEN + MyTextFormat.BOLD + receiver_average_bitrate + MyTextFormat.END + colorama.Fore.RESET)
+    print('Number of all packets: ' + colorama.Fore.GREEN + MyTextFormat.BOLD + str(all_packets_counter) + MyTextFormat.END + colorama.Fore.RESET)
     print('Number of recieved packets: ' + colorama.Fore.GREEN + MyTextFormat.BOLD + str(received_packet_counter) + MyTextFormat.END + colorama.Fore.RESET)
     print('Number of retransmitted packets(Calculated by counting packets having same sequence number in Pyshark): ' + colorama.Fore.GREEN + MyTextFormat.BOLD + str(retransmition_packet_counter) + MyTextFormat.END + colorama.Fore.RESET)
     print('Number of retransmitted packets(Calculated by counting packets having \"retransmition\" substring in Pyshark): ' + colorama.Fore.GREEN + MyTextFormat.BOLD + str(retransmition_packet_counter_B) + MyTextFormat.END + colorama.Fore.RESET)
