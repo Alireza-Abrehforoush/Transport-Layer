@@ -35,7 +35,7 @@ def main():
     speed = input('Please enter intended speed(e.g. 5G):\n')
     port = int(input('Please enter intended port(e.g. 4040):\n'))
     interval = float(input('Please enter intended interval(e.g. 1(minimum 0.1 and max 60 seconds)):\n'))
-    command_no = int(input(f'Enter number of intended client command:\n1: \"‫‪iperf3‬‬ ‫‪-c‬‬ ‫‪{ip}‬‬ ‫‪-b‬‬ {speed}‬‬‬‬ ‫‪-p‬‬ ‫‪{port}‬‬ -i {interval} -J > file.json\"\n2: \"‫‪iperf3‬‬ ‫‪-c‬‬ ‫‪{ip}‬‬ ‫‪-b‬‬ ‫‪{speed}‬‬‬‬ ‫‪-p‬‬ ‫‪{port}‬‬ -i {interval} ‫‪-u‬‬ -J > file.json\"\n'))
+    command_no = int(input(f'Please enter number of intended client command:\n1: \"‫‪iperf3‬‬ ‫‪-c‬‬ ‫‪{ip}‬‬ ‫‪-b‬‬ {speed}‬‬‬‬ ‫‪-p‬‬ ‫‪{port}‬‬ -i {interval} -J > file.json\"\n2: \"‫‪iperf3‬‬ ‫‪-c‬‬ ‫‪{ip}‬‬ ‫‪-b‬‬ ‫‪{speed}‬‬‬‬ ‫‪-p‬‬ ‫‪{port}‬‬ -i {interval} ‫‪-u‬‬ -J > file.json\"\n'))
     print('')
     iperf_client_command = ''
     if command_no == 1:
