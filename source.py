@@ -48,12 +48,14 @@ def main():
     timeout = 10
     start = time.time()
     retransmition_packet_counter = 0
+    retransmition_packet_counter_B = 0
+    retransmition_packet_counter_C = ''
     received_packet_counter = 0
     dic_of_received_packets = {}
 
     print('Calculating...')
 #Calculating number of recieved packets and Number of retransmited packets
-#Not mine
+#A
     # capturer.sniff(timeout = timeout)
     # print('Capturing done\n')
     # print('Calculating...')
@@ -62,14 +64,15 @@ def main():
     #     data = f'{capturer[i]}'
     #     if 'retransmission' in data or 'Retransmission' in data:
     #         retransmition_packet_counter += 1
-#Mine
+#B
     for pkt in capturer.sniff_continuously():
+        if 'retransmission' in pkt or 'Retransmission' in pkt:
+            retransmition_packet_counter_B += 1
         current_seq_number = pkt[pkt.transport_layer].seq_raw
         current_src_port = pkt[pkt.transport_layer].srcport
         if time.time() - start > timeout:
             break
         else:
-            # print(pkt)
             if int(current_src_port) == port:
                 received_packet_counter += 1
             if current_seq_number in dic_of_received_packets:
@@ -86,7 +89,6 @@ def main():
     while True:
         client_output = client_process.stdout.readline()
         iperf_client_details += client_output + '\n'
-        # print(client_output)########################################
         c_index = 0
         client_bitrate_str = ''
         if client_output.find('bits/sec') != -1:
@@ -95,21 +97,36 @@ def main():
                 client_bitrate_str = client_output[c_index] + client_bitrate_str
                 c_index -= 1
             snd_x_axis.append(snd_period + interval)
-            # print('$' + client_bitrate_str + '$')
             snd_y_axis.append(float(client_bitrate_str))
             snd_period += interval
+
         if 'sender' in client_output:
             sender_index = client_output.find('bits/sec')
             temp = sender_index - 3
             while client_output[temp] != ' ':
                 temp -= 1
             receiver_average_bitrate = client_output[temp + 1:sender_index + len('bits/sec')]
+            kemp = sender_index + len('bits/sec') + 1
+            is_digit_read = 0
+            while True:
+                if client_output[kemp] == ' ':
+                    kemp += 1
+                    continue
+                else:
+                    break
+            hemp = kemp
+            while True:
+                if client_output[hemp] == ' ':
+                    break
+                else:
+                    hemp += 1
+                    continue
+            retransmition_packet_counter_C = client_output[kemp: hemp + 1]
         if client_output == '':
             break
     while True:
         server_output = server_process.stdout.readline()
         iperf_server_details += server_output + '\n'
-        # print(server_output)########################################
         s_index = 0
         server_bitrate_str = ''
         if server_output.find('bits/sec') != -1:
@@ -117,9 +134,7 @@ def main():
             while server_output[s_index] != ' ':
                 server_bitrate_str = server_output[s_index] + server_bitrate_str
                 s_index -= 1
-            
             rcv_x_axis.append(rcv_period + interval)
-            # print('#' + server_bitrate_str + '#')
             rcv_y_axis.append(float(server_bitrate_str))
             rcv_period += interval
         if 'receiver' in server_output:
@@ -134,8 +149,9 @@ def main():
     print('Results:')
     print('Average Sender Throughput: ' + colorama.Fore.GREEN + MyTextFormat.BOLD + receiver_average_bitrate + MyTextFormat.END + colorama.Fore.RESET)
     print('Number of recieved packets: ' + colorama.Fore.GREEN + MyTextFormat.BOLD + str(received_packet_counter) + MyTextFormat.END + colorama.Fore.RESET)
-    print('Number of retransmitted packets(Pyshark): ' + colorama.Fore.GREEN + MyTextFormat.BOLD + str(retransmition_packet_counter) + MyTextFormat.END + colorama.Fore.RESET)
-    
+    print('Number of retransmitted packets(Calculated by counting packets having same sequence number in Pyshark): ' + colorama.Fore.GREEN + MyTextFormat.BOLD + str(retransmition_packet_counter) + MyTextFormat.END + colorama.Fore.RESET)
+    print('Number of retransmitted packets(Calculated by counting packets having \"retransmition\" substring in Pyshark): ' + colorama.Fore.GREEN + MyTextFormat.BOLD + str(retransmition_packet_counter_B) + MyTextFormat.END + colorama.Fore.RESET)
+    print('Number of retransmitted packets or jitter(Retransmition/jitter detected in Iperf3): ' + colorama.Fore.GREEN + MyTextFormat.BOLD + retransmition_packet_counter_C + MyTextFormat.END + colorama.Fore.RESET)
     print('')
     plt.plot(snd_x_axis, snd_y_axis, label = 'Sender', color = 'red')
     plt.plot(rcv_x_axis, rcv_y_axis, label = 'Receiver', color = 'blue')
