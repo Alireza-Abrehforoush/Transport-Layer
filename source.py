@@ -28,10 +28,14 @@ def main():
     rcv_period = 0
     receiver_average_bitrate = ''
     ip = '127.0.0.1'
-    interval = 1
-    port = 4040
     speed = '5G'
-    command_no = int(input(f'Enter number of intended client command:\n1: \"‫‪iperf3‬‬ ‫‪-c‬‬ ‫‪{ip}‬‬ ‫‪-b‬‬ {speed}‬‬‬‬ ‫‪-p‬‬ ‫‪{port}‬‬ -J > file.json\"\n2: \"‫‪iperf3‬‬ ‫‪-c‬‬ ‫‪{ip}‬‬ ‫‪-b‬‬ ‫‪{speed}‬‬‬‬ ‫‪-p‬‬ ‫‪{port}‬‬ ‫‪-u‬‬ -J > file.json\"\n'))
+    port = 4040
+    interval = 1
+    ip = input('Please enter intended ip address of server(e.g. 127.0.0.1):\n')
+    speed = input('Please enter intended speed(e.g. 5G):\n')
+    port = int(input('Please enter intended port(e.g. 4040):\n'))
+    interval = float(input('Please enter intended interval(e.g. 1(minimum 0.1 and max 60 seconds)):\n'))
+    command_no = int(input(f'Enter number of intended client command:\n1: \"‫‪iperf3‬‬ ‫‪-c‬‬ ‫‪{ip}‬‬ ‫‪-b‬‬ {speed}‬‬‬‬ ‫‪-p‬‬ ‫‪{port}‬‬ -i {interval} -J > file.json\"\n2: \"‫‪iperf3‬‬ ‫‪-c‬‬ ‫‪{ip}‬‬ ‫‪-b‬‬ ‫‪{speed}‬‬‬‬ ‫‪-p‬‬ ‫‪{port}‬‬ -i {interval} ‫‪-u‬‬ -J > file.json\"\n'))
     print('')
     iperf_client_command = ''
     if command_no == 1:
